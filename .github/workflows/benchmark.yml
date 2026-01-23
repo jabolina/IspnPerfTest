@@ -1,7 +1,16 @@
 name: Benchmark Automation
 
 on:
-  - workflow_dispatch
+  workflow_dispatch:
+    inputs:
+      infinispan_version:
+        description: 'Infinispan Version (optional)'
+        required: false
+        type: string
+      jgroups_version:
+        description: 'JGroups Version (optional)'
+        required: false
+        type: string
 
 jobs:
   build-application:
@@ -18,4 +27,20 @@ jobs:
           cache: maven
 
       - name: Build with Maven
-        run: mvn clean package
+        env:
+          INFINISPAN_VERSION: ${{ inputs.infinispan_version }}
+          JGROUPS_VERSION: ${{ inputs.jgroups_version }}
+        run: |
+          MVN_CMD="mvn clean install -DskipTests"
+          
+          if [ -n "$INFINISPAN_VERSION" ]; then
+            echo "Overriding Infinispan Version with $INFINISPAN_VERSION"
+            MVN_CMD="$MVN_CMD -Dversion.infinispan=$INFINISPAN_VERSION"
+          fi
+          
+          if [ -n "$JGROUPS_VERSION" ]; then
+            echo "Overriding JGroups Version with $JGROUPS_VERSION"
+            MVN_CMD="$MVN_CMD -Dversion.jgroups=$JGROUPS_VERSION"
+          fi
+
+          $MVN_CMD
