@@ -1,0 +1,12 @@
+name: Benchmark Automation
+
+on:
+  - workflow_dispatch
+
+jobs:
+  sanity-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Say my name
+        run: |
+          echo "Heisenberg"
