@@ -12,6 +12,16 @@ on:
         required: false
         type: string
 
+      infinispan_repository:
+        description: 'Custom repository to build Infinispan from (optional, infinispan/infinispan:main)'
+        required: false
+        type: string
+
+      jgroups_repository:
+        description: 'Custom repository to build JGroups from (optional, belaban/jgroups:master)'
+        required: false
+        type: string
+
       # Define the arguments for provisioning the environment.
       aws_region:
         description: 'The AWS region to provision'
@@ -50,17 +60,49 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
-          java-version: 21
+          java-version: 25
           distribution: temurin
           cache: maven
 
+      - name: Initialize build variables
+        run: |
+          echo "INFINISPAN_VERSION=${{ inputs.infinispan_version }}" >> $GITHUB_ENV
+          echo "JGROUPS_VERSION=${{ inputs.jgroups_version }}" >> $GITHUB_ENV 
+
+      - name: "Build custom JGroups (${{ inputs.jgroups_repository }})"
+        if: ${{ inputs.jgroups_repository != '' }}
+        run: |
+          INPUT="${{ inputs.jgroups_repository }}"
+          REPO="${INPUT%%:*}"   # Everything before the colon
+          REF="${INPUT##*:}"    # Everything after the colon
+          
+          git clone --depth 1 --branch "$REF" "https://github.com/$REPO.git" custom-jgroups
+          cd custom-jgroups
+          
+          mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dcheckstyle.skip=true
+          DETECTED_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "Detected Custom JGroups Version: $DETECTED_VERSION"
+          echo "JGROUPS_VERSION=$DETECTED_VERSION" >> $GITHUB_ENV
+
+      - name: "Build Custom Infinispan (${{ inputs.infinispan_repository }})"
+        if: ${{ inputs.infinispan_repository != '' }}
+        run: |
+          INPUT="${{ inputs.infinispan_repository }}"
+          REPO="${INPUT%%:*}"
+          REF="${INPUT##*:}"
+          
+          git clone --depth 1 --branch "$REF" "https://github.com/$REPO.git" custom-infinispan
+          cd custom-infinispan
+
+          mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dcheckstyle.skip=true -Dmaven.source.skip=true
+          DETECTED_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "Detected Custom Infinispan Version: $DETECTED_VERSION"
+          echo "INFINISPAN_VERSION=$DETECTED_VERSION" >> $GITHUB_ENV
+
       - name: Build with Maven
-        env:
-          INFINISPAN_VERSION: ${{ inputs.infinispan_version }}
-          JGROUPS_VERSION: ${{ inputs.jgroups_version }}
         run: |
           MVN_CMD="mvn clean install -DskipTests"
           
@@ -207,6 +249,7 @@ jobs:
           
           echo "Now the txt"
           cat results.txt
+
 
   cleanup:
     runs-on: ubuntu-latest
