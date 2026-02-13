@@ -165,9 +165,32 @@ jobs:
         working-directory: ansible
         run: |
           cat results.csv
-          
-          echo "Now the txt"
           cat results.txt
+          
+          # Extract the last non-empty line, split by command, get second column, strip empty spaces.
+          THROUGHPUT=$(tac results.csv | egrep -m 1 . | cut -d',' -f2 | xargs)
+          
+          cat <<EOF > benchmark-data.json
+          [
+            {
+              "name": "Cluster Throughput",
+              "unit": "reqs/sec",
+              "value": $THROUGHPUT
+            }
+          ]
+          EOF
+          
+          cat benchmark-data.json
+
+      - name: Store Benchmark Result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'customBiggerIsBetter'
+          output-file-path: ansible/benchmark-data.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          alert-threshold: '20%'
+          fail-on-alert: true
 
 
   cleanup:
