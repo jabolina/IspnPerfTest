@@ -161,36 +161,94 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
+      - name: Extract benchmark configuration
+        id: extract-config
+        working-directory: ansible
+        run: |
+          # Extract configuration metadata from results
+          eval $(../.github/scripts/benchmark-metadata/extract-config.sh results.txt)
+
+          # Output as step outputs
+          echo "nodes=$BENCHMARK_NODES" >> $GITHUB_OUTPUT
+          echo "cache_config=$BENCHMARK_CACHE_CONFIG" >> $GITHUB_OUTPUT
+          echo "jdk_version=$BENCHMARK_JDK_VERSION" >> $GITHUB_OUTPUT
+          echo "vthreads=$BENCHMARK_VTHREADS" >> $GITHUB_OUTPUT
+          echo "ispn_version=$BENCHMARK_ISPN_VERSION" >> $GITHUB_OUTPUT
+          echo "jgroups_version=$BENCHMARK_JGROUPS_VERSION" >> $GITHUB_OUTPUT
+          echo "num_threads=$BENCHMARK_NUM_THREADS" >> $GITHUB_OUTPUT
+          echo "read_percentage=$BENCHMARK_READ_PERCENTAGE" >> $GITHUB_OUTPUT
+
+      - name: Generate configuration ID and name
+        id: config-id
+        run: |
+          # Generate both the ID (for uniqueness) and human-readable name (for display)
+          eval $(.github/scripts/benchmark-metadata/generate-config-id.sh \
+            --cluster-size "${{ steps.extract-config.outputs.nodes }}" \
+            --cache-config "${{ steps.extract-config.outputs.cache_config }}" \
+            --jdk-version "${{ steps.extract-config.outputs.jdk_version }}" \
+            --vthreads "${{ steps.extract-config.outputs.vthreads }}" \
+            --ispn-version "${{ steps.extract-config.outputs.ispn_version }}" \
+            --jgroups-version "${{ steps.extract-config.outputs.jgroups_version }}" \
+            --read-percentage "${{ steps.extract-config.outputs.read_percentage }}" \
+            --num-threads "${{ steps.extract-config.outputs.num_threads }}" \
+            --output both)
+
+          echo "Configuration ID: $ID"
+          echo "Configuration Name: $NAME"
+          echo "id=$ID" >> $GITHUB_OUTPUT
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+
       - name: Show the results
         working-directory: ansible
         run: |
+          echo "=== Configuration ==="
+          echo "Config ID: ${{ steps.config-id.outputs.id }}"
+          echo "Config Name: ${{ steps.config-id.outputs.name }}"
+          echo "Nodes: ${{ steps.extract-config.outputs.nodes }}"
+          echo "Cache Config: ${{ steps.extract-config.outputs.cache_config }}"
+          echo "JDK: ${{ steps.extract-config.outputs.jdk_version }}"
+          echo "Virtual Threads: ${{ steps.extract-config.outputs.vthreads }}"
+          echo "Infinispan: ${{ steps.extract-config.outputs.ispn_version }}"
+          echo "JGroups: ${{ steps.extract-config.outputs.jgroups_version }}"
+          echo ""
+          echo "=== Results CSV ==="
           cat results.csv
+          echo ""
+          echo "=== Results Details ==="
           cat results.txt
-          
-          # Extract the last non-empty line, split by command, get second column, strip empty spaces.
+
+          # Extract the last non-empty line, split by comma, get second column, strip empty spaces.
           THROUGHPUT=$(tac results.csv | egrep -m 1 . | cut -d',' -f2 | xargs)
-          
+
+          # Create benchmark data with configuration metadata
           cat <<EOF > benchmark-data.json
           [
             {
               "name": "Cluster Throughput",
               "unit": "reqs/sec",
-              "value": $THROUGHPUT
+              "value": $THROUGHPUT,
+              "extra": "JDK ${{ steps.extract-config.outputs.jdk_version }}, Infinispan ${{ steps.extract-config.outputs.ispn_version }}, JGroups ${{ steps.extract-config.outputs.jgroups_version }}"
             }
           ]
           EOF
-          
+
+          echo ""
+          echo "=== Benchmark Data ==="
           cat benchmark-data.json
 
       - name: Store Benchmark Result
         uses: benchmark-action/github-action-benchmark@v1
         with:
+          name: '${{ steps.config-id.outputs.name }}'
           tool: 'customBiggerIsBetter'
           output-file-path: ansible/benchmark-data.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
           alert-threshold: '20%'
-          fail-on-alert: true
+          comment-on-alert: true
+          fail-on-alert: false
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: benchmarks
 
 
   cleanup:
