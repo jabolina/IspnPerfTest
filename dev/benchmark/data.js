@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772827290956,
+  "lastUpdate": 1772828460064,
   "repoUrl": "https://github.com/jabolina/IspnPerfTest",
   "entries": {
     "Variance nodes": [
@@ -84,6 +84,34 @@ window.BENCHMARK_DATA = {
             "value": 169913.16,
             "unit": "reqs/sec",
             "extra": "100% reads now \n Variance nodes (JDK: 25, ISPN: 16.0.2, JGroups: 5.5.1)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "José Bolina",
+            "username": "jabolina",
+            "email": "jose@infinispan.org"
+          },
+          "committer": {
+            "name": "José Bolina",
+            "username": "jabolina",
+            "email": "jose@infinispan.org"
+          },
+          "id": "2aede4c999ba7f3a3bad69b751223aa01bcb2731",
+          "message": "include generated name in description",
+          "timestamp": "2026-03-06T20:06:07Z",
+          "url": "https://github.com/jabolina/IspnPerfTest/commit/2aede4c999ba7f3a3bad69b751223aa01bcb2731"
+        },
+        "date": 1772828459741,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Cluster Throughput",
+            "value": 81934.23,
+            "unit": "reqs/sec",
+            "extra": "80% writes now \n8 nodes, dist-sync, virtual threads, 20% reads (JDK: 25, ISPN: 16.0.2, JGroups: 5.5.1)"
           }
         ]
       }
