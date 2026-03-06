@@ -106,7 +106,7 @@ fi
 # Add virtual threads indicator
 if [[ "$VTHREADS" == "true" ]]; then
   CONFIG_ID="${CONFIG_ID}-vt"
-  HUMAN_NAME="${HUMAN_NAME} (Virtual Threads)"
+  HUMAN_NAME="${HUMAN_NAME}, virtual threads"
 fi
 
 # Add read percentage if non-default

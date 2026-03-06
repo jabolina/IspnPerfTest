@@ -3,6 +3,24 @@ name: Benchmark Automation
 on:
   workflow_dispatch:
     inputs:
+      chart_name:
+        description: 'Name of the chart'
+        required: false
+        type: string
+        default: ''
+
+      chart_description:
+        description: 'Description for chat'
+        required: false
+        type: string
+        default: ''
+
+      chart_folder:
+        description: 'Folder to store the benchmark results'
+        required: false
+        type: string
+        default: 'dev/benchmark'
+
       infinispan_version:
         description: 'Infinispan Version (optional)'
         required: false
@@ -196,7 +214,12 @@ jobs:
           echo "Configuration ID: $ID"
           echo "Configuration Name: $NAME"
           echo "id=$ID" >> $GITHUB_OUTPUT
-          echo "name=$NAME" >> $GITHUB_OUTPUT
+          
+          if [ -z "${{ inputs.chart_name }}" ]; then
+            echo "name=$NAME" >> $GITHUB_OUTPUT
+          else
+            echo "name=${{ inputs.chart_name }}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Show the results
         working-directory: ansible
@@ -219,6 +242,11 @@ jobs:
 
           # Extract the last non-empty line, split by comma, get second column, strip empty spaces.
           THROUGHPUT=$(tac results.csv | egrep -m 1 . | cut -d',' -f2 | xargs)
+          
+          DESCRIPTION="${{ inputs.chart_description }}"
+          if [ -z "$DESCRIPTION" ]; then
+            DESCRIPTION="${{ steps.config-id.outputs.name }} (JDK: ${{ steps.extract-config.outputs.jdk_version }}, ISPN: ${{ steps.extract-config.outputs.ispn_version }}, JGroups: ${{ steps.extract-config.outputs.jgroups_version }})"
+          fi
 
           # Create benchmark data with configuration metadata
           cat <<EOF > benchmark-data.json
@@ -227,7 +255,7 @@ jobs:
               "name": "Cluster Throughput",
               "unit": "reqs/sec",
               "value": $THROUGHPUT,
-              "extra": "JDK ${{ steps.extract-config.outputs.jdk_version }}, Infinispan ${{ steps.extract-config.outputs.ispn_version }}, JGroups ${{ steps.extract-config.outputs.jgroups_version }}"
+              "extra": "$DESCRIPTION"
             }
           ]
           EOF
@@ -248,7 +276,7 @@ jobs:
           comment-on-alert: true
           fail-on-alert: false
           gh-pages-branch: gh-pages
-          benchmark-data-dir-path: benchmarks
+          benchmark-data-dir-path: '${{ inputs.chart_folder }}'
 
 
   cleanup:
