@@ -214,6 +214,7 @@ jobs:
           echo "Configuration ID: $ID"
           echo "Configuration Name: $NAME"
           echo "id=$ID" >> $GITHUB_OUTPUT
+          echo "automatic=$NAME" >> $GITHUB_OUTPUT
           
           if [ -z "${{ inputs.chart_name }}" ]; then
             echo "name=$NAME" >> $GITHUB_OUTPUT
@@ -242,7 +243,7 @@ jobs:
 
           # Extract the last non-empty line, split by comma, get second column, strip empty spaces.
           THROUGHPUT=$(tac results.csv | egrep -m 1 . | cut -d',' -f2 | xargs)
-          DESCRIPTION="${{ inputs.chart_description }} \n ${{ steps.config-id.outputs.name }} (JDK: ${{ steps.extract-config.outputs.jdk_version }}, ISPN: ${{ steps.extract-config.outputs.ispn_version }}, JGroups: ${{ steps.extract-config.outputs.jgroups_version }})"
+          DESCRIPTION="${{ inputs.chart_description }} \n${{ steps.config-id.outputs.automatic }} (JDK: ${{ steps.extract-config.outputs.jdk_version }}, ISPN: ${{ steps.extract-config.outputs.ispn_version }}, JGroups: ${{ steps.extract-config.outputs.jgroups_version }})"
 
           # Create benchmark data with configuration metadata
           cat <<EOF > benchmark-data.json
