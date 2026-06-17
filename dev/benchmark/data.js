@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779820752744,
+  "lastUpdate": 1781722225047,
   "repoUrl": "https://github.com/jabolina/IspnPerfTest",
   "entries": {
     "Variance nodes": [
@@ -312,6 +312,34 @@ window.BENCHMARK_DATA = {
             "value": 79617.07,
             "unit": "reqs/sec",
             "extra": " \nDefault Configuration (JDK: , ISPN: , JGroups: )"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "José Bolina",
+            "username": "jabolina",
+            "email": "jose@infinispan.org"
+          },
+          "committer": {
+            "name": "José Bolina",
+            "username": "jabolina",
+            "email": "jose@infinispan.org"
+          },
+          "id": "c19a82b302c282ebdbba3a4135ef1792b2a468ad",
+          "message": "Adding extra configurations",
+          "timestamp": "2026-06-17T18:37:10Z",
+          "url": "https://github.com/jabolina/IspnPerfTest/commit/c19a82b302c282ebdbba3a4135ef1792b2a468ad"
+        },
+        "date": 1781722224723,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Cluster Throughput",
+            "value": 557404.31,
+            "unit": "reqs/sec",
+            "extra": "Trying persistence \n8 nodes, local-sifs, virtual threads (JDK: 25, ISPN: 16.2.0.Dev01, JGroups: 5.5.4)"
           }
         ]
       }
